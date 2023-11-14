@@ -1,0 +1,50 @@
+---
+# Source: opa/templates/deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: "opa-service"
+  namespace: 
+  labels:
+    app: opa
+spec:
+  type: NodePort
+  ports:
+    - name: "http-opa"
+      protocol: TCP
+      port: 8181
+  selector:
+    app: opa
+---
+# Source: opa/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  namespace: 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+    spec:
+      containers:
+        - name: opa
+          image: "docker.io/openpolicyagent/opa:0.58.0"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "0.2"
+              memory: "512Mi"
+            limits:
+              cpu: "0.2"
+              memory: "512Mi"
+          # envFrom:
+          #  - configMapRef:
+          #     name: opa-config
+          ports:
+            - containerPort: 8181

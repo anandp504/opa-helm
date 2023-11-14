@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      volumes:
+        - name: opa-volume
+          configMap:
+            name: {{ .Release.Name }}-config
+            items:
+            - key: opa-rego-config
+              path: {{ .Release.Name }}.rego
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.image_tag }}"
+          imagePullPolicy: Always
+          args: ["run", "--server"]
+          resources:
+            requests:
+              cpu: "{{ .Values.cpu_requests }}"
+              memory: "{{ .Values.memory_requests }}"
+            limits:
+              cpu: "{{ .Values.cpu_limits }}"
+              memory: "{{ .Values.memory_limits }}"
+          volumeMounts:
+            - name: opa-volume
+              mountPath: /example
+              subPath: {{ .Release.Name }}.rego
+          ports:
+            - containerPort: 8181
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Chart.Name }}"
+  namespace: {{ .Release.namespace }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  type: NodePort
+  ports:
+    - name: "http-{{ .Chart.Name }}"
+      protocol: TCP
+      port: {{ .Values.network.port }}
+      targetPort: {{ .Values.network.targetport }}
+  selector:
+    app: {{ .Chart.Name }}

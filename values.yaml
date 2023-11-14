@@ -1,0 +1,37 @@
+namespace: "opa"
+replicaCount: 1
+image:
+  registry: "docker.io"
+  repository: "openpolicyagent/opa"
+  image_tag: latest
+cpu_requests: 0.2
+cpu_limits: 0.2
+memory_requests: 512Mi
+memory_limits: 512Mi
+network:
+  port: '8181'
+  targetport: '8181'
+rego_config: |
+  allow {
+    input.method = "GET"
+    input.path = ["badge"]
+    allowed[badge]
+  }
+
+  allowed[badge] {
+      data.badge[badge]
+      badge.actor_id = input.user
+      badge.edata_data_progress = 1
+      badge.edata_data_lastAccessedOn >= "2023-01-01 00:00:00"
+      badge.edata_data_lastAccessedOn < "2023-12-31 23:59:00"
+  }
+
+  allowed[badge] {
+      data.badge[badge]
+      badge.edata_data_objectId = "lex_14657463832039252000"
+  }
+
+  allowed[badge] {
+      data.badge[badge]
+      badge.edata_data_objectId = "lex_auth_012657142583066624383"
+  }
